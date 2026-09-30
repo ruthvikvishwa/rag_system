@@ -1,0 +1,2 @@
+[console_scripts]
+rag-system = rag_system.main:main
