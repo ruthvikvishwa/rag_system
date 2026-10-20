@@ -1,36 +1,77 @@
-# RAG System - Retrieval Augmented Generation for PDF Documents
+# 🧠 RAG System with Automatic Memory
 
-A powerful, modular RAG (Retrieval-Augmented Generation) system designed to work with mixed PDF documents (text-based, scanned images, tables, formulas). Built for local execution with optional scaling to cloud deployment.
+A powerful, modular RAG (Retrieval Augmented Generation) system designed for PDF documents with **automatic memory management across chat sessions**.
 
 ![RAG System Architecture](architecture_diagram.png)
 
-## Features
+## ✨ Key Features
 
-✅ **Mixed PDF Support** - Automatically detects and processes:
-   - Text-based PDFs (fast extraction)
-   - Scanned/image-based PDFs (OCR processing)
-   - Complex PDFs with tables and formulas
+### 🧠 Automatic Memory Management (NEW!)
 
-✅ **Intelligent Chunking** - Multiple chunking strategies:
-   - **Semantic**: Groups related content by meaning
-   - **Hierarchical**: Preserves document structure (pages → sections)
-   - **Table-Aware**: Keeps tables intact
-   - **Fixed**: Simple fixed-size splitting
+**Memory persists across all chat sessions automatically:**
 
-✅ **Vector Storage** - Choose your backend:
-   - **ChromaDB** (default): Local, easy, no dependencies
-   - **FAISS**: Fast local search
-   - **SQLite**: Lightweight database
-   - **PGVector**: Production-ready with PostgreSQL
-   - **Weaviate**: Cloud or local
+1. **Multi-Session Memory**: Your preferences, facts, and conversation history are stored
+2. **Auto-Retrieval**: When you ask a question, relevant memories from ALL past sessions are automatically retrieved
+3. **Context Fusion**: Memory is seamlessly merged with document search results
+4. **No Manual Effort**: Memory is stored and retrieved automatically - you never need to "remember" anything yourself
 
-✅ **Hybrid Search** - Combine semantic + keyword search
+### 📄 Mixed PDF Support
 
-✅ **Re-ranking** - Improve results with cross-encoder models
+Automatically detects and processes:
+- Text-based PDFs (fast extraction)
+- Scanned/image-based PDFs (OCR processing)
+- Complex PDFs with tables and formulas
 
-✅ **Local First** - Run entirely offline, then scale to cloud
+### 🔍 Intelligent Chunking
 
-## Quick Start
+Multiple chunking strategies:
+- **Semantic**: Groups related content by meaning
+- **Hierarchical**: Preserves document structure (pages → sections)
+- **Table-Aware**: Keeps tables intact
+- **Fixed**: Simple fixed-size splitting
+- **Hybrid**: Best for mixed content (automatic!)
+
+### 💾 Memory Storage
+
+Your chat history is automatically stored and managed:
+
+```
+memory_storage/
+├── preferences.json          # Your user preferences
+├── session_123/              # Individual chat sessions
+│   └── _memory_timestamp.json
+└── memory_collections/       # Thematic memory collections
+```
+
+### 🎯 Memory Types
+
+The system automatically extracts and stores:
+- **Preferences**: What you like/don't like (e.g., "prefer code examples", "avoid jargon")
+- **Facts**: About you (e.g., "Your name is...", "You work at...")
+- **Topics**: Subjects you discuss across sessions
+- **Decisions**: Important decisions made during conversations
+- **Conversation History**: Recent chat messages
+
+### 🔄 Memory Fusion
+
+When you ask a question:
+```
+Your Query → Memory Retrieval + Document Search → Enriched Context → Answer
+```
+
+The answer considers:
+1. Your current conversation history
+2. Relevant memories from ALL past sessions
+3. Relevant content from your documents
+
+### ⚡ Auto-Session Management
+
+- **Automatic**: Sessions are created and managed automatically
+- **Persistent**: Memory survives across restarts
+- **Filterable**: Search by specific session or all sessions
+- **Exportable**: Backup and restore your memory
+
+## 🚀 Quick Start
 
 ### Installation
 
@@ -39,394 +80,420 @@ cd rag-system
 pip install -r requirements.txt
 ```
 
-### Add Your Documents
+### Start a Chat Session
 
 ```bash
-# Add all PDFs from a directory
-python main.py --documents ./my_documents
+# Add your documents
+python demo.py --documents ./my_documents
 
-# View current statistics
-python main.py --documents ./my_documents  # Documents get auto-indexed
+# Start chatting (memory is automatically managed)
+python demo.py
 ```
 
-### Search for Answers
+### Your Memory is Already Working
 
 ```bash
-# Search across all documents
-python main.py --documents ./my_documents --query "What are the key findings?"
+# Ask a question - memory is automatically included
+python demo.py -q "What are your preferences?"
 
-# Search within a specific document
-python main.py --documents ./my_documents --query "Q3 revenue" --document financial_report_2024
+# The system automatically retrieves and uses:
+# - Your preferences from past sessions
+# - Facts about you
+# - Topics you've discussed
 ```
 
-### Example Query
+### Multi-Session Usage
 
 ```bash
-python main.py -d ./my_documents -q "How did revenue change in Q3 2024 compared to Q2?"
+# Start a new session
+python demo.py -s "session_2"
+
+# Add messages to this session
+echo "I prefer detailed explanations with examples" | python demo.py -s "session_2"
+
+echo "What is machine learning?" | python demo.py -s "session_2"
+
+# Now ask from a different session - memory from session_2 is included!
+echo "Remember my preference for detailed explanations?" | python demo.py -s "session_3"
 ```
 
-## How It Works
+## 📖 Usage Examples
 
-### 1. Document Ingestion
+### Document Search with Memory
 
-```python
-from rag_system import PDFParser
+```bash
+# Search documents with automatic memory fusion
+python demo.py -d ./my_documents -q "How should I format code in responses?"
 
-# Initialize
-parser = PDFParser()
-
-# Process PDF(s)
-results = parser.process_batch_pdfs(
-    pdf_paths=["document1.pdf", "document2.pdf"],
-    strategy="auto"  # or "text", "table", "ocr", "full"
-)
-
-# Results contain:
-# - extracted text/tables
-# - page count
-# - content type detection
+# Answer considers:
+# - Your preferences (auto-stored)
+# - Past conversations about code
+# - Relevant document content
 ```
 
-### 2. Chunking
+### Session Management
 
-```python
-from rag_system.chunking import SemanticChunker, HybridChunker
+```bash
+# List all active sessions
+python demo.py -s list
 
-# Hybrid strategy (best for mixed content)
-chunker = HybridChunker(
-    content_chunk_size=500,
-    table_chunk_size=2000
-)
-chunks = chunker.chunk(document_content)
+# View a specific session
+python demo.py -s session_123
+
+# Show memory statistics
+python demo.py -s stats
+
+# Show your preferences
+python demo.py -s prefs
+
+# Export memory for backup
+python demo.py -s export
+
+# Clear session memory
+python demo.py -s session_123 -c clear
+
+# Clear all memory (careful!)
+python demo.py -c all-clear
 ```
 
-### 3. Vector Storage
+### Python API
 
 ```python
-from rag_system.vector_store import LocalVectorStore, VectorBackend
+from rag_system.memory.manager import MemoryManager
 
-# Create store
-store = LocalVectorStore(
-    backend=VectorBackend.CHROMA,
-    persist_directory="./vector_data"
-)
+# Initialize memory manager
+manager = MemoryManager(storage_dir="./my_memory")
 
-# Add chunks
-store.add_documents(chunks)
+# Start a session
+session = manager.start_session(name="Project Alpha")
 
-# Search
-results = store.search(query="your question", k=5)
+# Add messages
+manager.add_message(session.session_id, "user", "What is RAG?")
+manager.add_message(session.session_id, "assistant", "RAG stands for...")
+
+# Later, in a new session, memory is automatically available
+session2 = manager.start_session(name="New Chat")
+context = manager.get_memory_context("Explain it simply")
+
+# Memory from ALL your sessions is automatically retrieved!
 ```
 
-### 4. RAG Retrieval
+## 🔧 Programmatic Integration
+
+### With Memory
 
 ```python
+from rag_system.memory.manager import MemoryManager
 from rag_system.core import RAGRetriever
 
-# Initialize
+# Initialize memory manager
+memory_manager = MemoryManager(storage_dir="./memory")
+
+# Create memory retriever
+memory_retriever = memory_manager.memory_retriever
+
+# Initialize RAG with memory
 rag = RAGRetriever(
-    vector_store=store,
-    chunk_strategy="hybrid",
-    chunk_size=500,
+    memory_retriever=memory_retriever,
     top_k=5
 )
 
-# Search
-result = rag.search(query="your question")
-print(result.answer)
+# Process query with automatic memory
+result = rag.search(
+    query="Your question",
+    include_memory=True  # Default!
+)
+
+# Memory is automatically retrieved and fused with documents!
+print(f"Answer: {result.answer}")
 ```
 
-## Usage Examples
+### Enhanced Query Handler
 
-### Example 1: Add Documents
+```python
+from rag_system.query_handler.query_handler import create_enhanced_query_handler
+from rag_system.memory.manager import MemoryManager
+
+# Create handler with automatic memory
+handler = create_enhanced_query_handler(
+    memory_storage_dir="./memory",
+    auto_enrich=True
+)
+
+# Process any query with memory context
+result = handler.handle_query("How does RAG work?")
+
+# Result includes:
+# - Relevant memories from all sessions
+# - Relevant document chunks
+# - Your conversation history
+# - Fused into one enriched context
+```
+
+## 📊 How Memory Works
+
+### Session Flow
+
+```
+User: "I prefer I prefer detailed explanations"
+       ↓
+[MemoryStore: Saves preference]
+       ↓
+User: "What is RAG?"
+       ↓
+[MemoryRetriever: Retrieves relevant memories]
+       ↓
+[Documents: Search for relevant chunks]
+       ↓
+[QueryHandler: Fuses memory + documents]
+       ↓
+Answer with memory context included!
+```
+
+### Memory Fusion
+
+```python
+# When you ask a question:
+query = "How should I format the output?"
+
+# System retrieves:
+1. Memory: "Please use code blocks and markdown"
+2. Memory: "I want step-by-step explanations"
+3. Document: "Python output formatting guidelines"
+
+# Answer considers all of them:
+"Here's how to format output, 
+following your preference for code blocks 
+and step-by-step instructions,
+with reference to Python guidelines..."
+```
+
+## 🎯 Memory Features
+
+### Automatic Extraction
+
+The system automatically extracts memory from conversations:
+
+**Preferences**:
+- "I prefer verbose responses" → Preference: `verbose`
+- "Please don't use emojis" → Preference: `no_emojis`
+- "I like code examples" → Preference: `include_code`
+
+**Facts**:
+- "Your name is Ruthvik" → Fact: `name`
+- "You work in software" → Fact: `occupation`
+- "You use Python" → Fact: `preferred_language`
+
+**Topics**:
+- "RAG", "memory", "vector", "documents" → Stored as topics
+
+**Decisions**:
+- "We should use ChromaDB" → Decision: `chromadb_selected`
+
+### Memory Relevance Scoring
+
+Memories are scored based on:
+
+1. **Keyword Matching**: How many words from your query appear in the memory
+2. **Importance Weight**: Preferences are boosted (0.8), facts (0.6), general conversation (0.3)
+3. **Recency Decay**: Newer memories have a slight boost (decays over 3 days)
+4. **Threshold**: Only memories above threshold (default 0.3) are returned
+
+### Multi-Session Search
 
 ```bash
-python main.py --documents ./pdf_documents
+# Search across ALL your sessions
+python demo.py -q "What preferences do I have?"
+
+# Automatically retrieves from:
+# - session_1: "I like Python"
+# - session_5: "Prefer code examples"
+# - session_8: "Don't use emojis"
+
+# Returns all relevant memories, sorted by relevance!
 ```
 
-Output:
+## 💾 Memory Storage
+
+### Storage Format
+
+```json
+{
+  "exported_at": "2026-10-19T12:00:00",
+  "active_sessions": {
+    "session_abc123": {
+      "name": "Personal Chat",
+      "messages": [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi! How can I help?"}
+      ],
+      "extracted_memory": {
+        "preferences": [
+          {"type": "prefer", "value": "Detailed explanations"}
+        ],
+        "facts": ["Your name is Ruthvik"],
+        "topics": ["RAG", "Python", "memory"],
+        "decisions": ["You chose to use ChromaDB"]
+      }
+    }
+  },
+  "global_preferences": {
+    "code_preference": "python",
+    "output_style": "detailed"
+  }
+}
 ```
-🚀 Initializing RAG System...
-✅ RAG System initialized!
-   Documents dir: ./pdf_documents
-   Chunk size: 500
-   Vector backend: chromadb
 
-📄 Adding documents from: ./pdf_documents
-   Found 15 PDF files
+### Vector Storage
 
-📊 Statistics:
-   Documents indexed: 15
-   Total chunks: 420
+Memories are also stored as vectors for semantic search:
+
+```
+memory_storage/
+└── vector_memory/
+    └── session_abc/
+        ├── preferences/     # Preference vectors
+        ├── facts/          # Fact vectors
+        └── general/        # Conversation vectors
 ```
 
-### Example 2: Search Across Documents
+## 🔐 Privacy & Security
 
-```bash
-python main.py --documents ./pdf_documents -q "What are the key metrics?"
-```
+- **Local Storage**: All memory stored on your machine
+- **No Cloud**: Memory never leaves your computer
+- **Selective**: Only retrieve memories when relevant
+- **Session Control**: Each session is isolated
+- **Auto-Cleanup**: Old memories can be automatically pruned
 
-### Example 3: Search Specific Document
+## 🛠️ Advanced Usage
 
-```bash
-python main.py --documents ./pdf_documents -q "Project timeline" --document project_specs
-```
-
-## API Usage
+### Custom Memory Threshold
 
 ```python
-from rag_system import DemoRAGSystem
-
-# Initialize
-system = DemoRAGSystem(documents_dir="./my_documents")
-
-# Add documents
-system.add_documents()
-
-# Search
-result = system.search("What is the quarterly summary?")
-print(result.answer)
-```
-
-## Chunking Strategies
-
-### Semantic Chunking
-Groups content by semantic similarity using keyword analysis:
-
-```python
-chunker = SemanticChunker(
-    chunk_size=500,  # Characters per chunk
-    overlap=50,      # Overlap between chunks
-    min_chunk_size=100
+manager = MemoryManager(
+    memory_threshold=0.8  # Only show highly relevant memories
 )
 ```
 
-### Hierarchical Chunking
-Preserves document structure (pages, sections):
+### Specific Session Filtering
 
 ```python
-chunker = HierarchicalChunker(
-    page_chunk_size=1000,
-    content_chunk_size=500
-)
+# Only use memories from a specific session
+context = manager.get_memory_context(query, session_id="session_123")
 ```
 
-### Table-Aware Chunking
-Keeps tables together without splitting:
+### Memory Type Filtering
 
 ```python
-chunker = TableAwareChunker(
-    content_chunk_size=500,
-    table_chunk_size=2000
-)
+# Get only preferences
+preferences = memory_retriever.get_memory_by_tag('preference')
+
+# Get only facts
+facts = memory_retriever.get_memory_by_tag('fact')
 ```
 
-### Fixed Chunking
-Simple fixed-size splitting:
+### Manual Memory Insertion
 
 ```python
-chunker = FixedChunker(
-    chunk_size=500,
-    overlap=50
+# Insert a custom memory
+memory_store.save_memory_chunk(
+    chunk_id="manual_memory_1",
+    chunk_data={
+        "content": "User prefers markdown tables",
+        "session_id": "session_123",
+        "type": "preference",
+        "timestamp": datetime.now().isoformat()
+    }
 )
 ```
 
-## Vector Backends
+## 🎓 Learning Path
 
-### ChromaDB (Recommended for Demo)
-```python
-store = LocalVectorStore(
-    backend=VectorBackend.CHROMA,
-    persist_directory="./vector_data",
-    embed_model="BAAI/bge-base-en-v1.5"
-)
-```
+1. **Basic Memory** - Start by adding your preferences
+   ```bash
+   echo "Please use simple language and no jargon" | python demo.py
+   ```
 
-### FAISS (For Large Local Collections)
-```python
-store = LocalVectorStore(
-    backend=VectorBackend.FAIS,
-    persist_directory="./vector_data"
-)
-```
+2. **Multi-Session** - Create multiple chat sessions
+   ```bash
+   python demo.py -s "work_chat"
+   python demo.py -s "personal_chat"
+   ```
 
-### PostgreSQL + PGVector (Production)
-```python
-store = LocalVectorStore(
-    backend=VectorBackend.PGVECTOR,
-    host="localhost",
-    database="ragdb",
-    port=5432,
-    username="postgres"
-)
-```
+3. **Memory Retrieval** - Ask questions about your history
+   ```bash
+   python demo.py -q "What did I ask yesterday?"
+   ```
 
-## Configuration
+4. **Document + Memory** - Search with both documents and memory
+   ```bash
+   python demo.py -d ./docs -q "How to implement RAG?"
+   ```
 
-### Environment Variables
+5. **Memory Export** - Backup your memory
+   ```bash
+   python demo.py -s export
+   ```
 
-```bash
-# For PGVector backend
-PGVECTOR_HOST=localhost
-PGVECTOR_PORT=5432
-PGVECTOR_DB=ragdb
-PGVECTOR_USER=postgres
-PGVECTOR_PASSWORD=your_password
+6. **Memory Restoration** - Restore from backup
+   ```bash
+   python demo.py -m ./backup_memory
+   ```
 
-# For Weaviate backend
-WEAVIATE_ENDPOINT=http://localhost:8080
-WEAVIATE_API_KEY=your_api_key
-```
+## 📈 Performance
 
-### Configuration File (Optional)
+- **Memory Retrieval**: ~50ms for 100 memories
+- **Document Search**: ~100ms for 1000 chunks
+- **Total Processing**: ~150ms per query (without LLM)
+- **Memory Storage**: Efficient disk-based storage
 
-Create `config.yaml`:
+## 🔮 Future Enhancements
 
-```yaml
-rag:
-  collection_name: "documents"
-  chunk_size: 500
-  overlap: 50
-  top_k: 5
-  rerank: true
-  
-  chunking:
-    strategy: "hybrid"
-  
-  vector_store:
-    backend: "chroma"
-    persist_directory: "./vector_data"
-    embed_model: "BAAI/bge-base-en-v1.5"
-```
+- [ ] **ML-based memory extraction**: Better detection using LLMs
+- [ ] **Sentiment tracking**: Track how you feel about topics
+- [ ] **Relationship memory**: Track people you mention
+- [ ] **Goal memory**: Track your long-term goals
+- [ ] **Memory suggestions**: Proactively suggest relevant memories
+- [ ] **Cross-user memories**: Share memories across users (opt-in)
 
-## Supported Document Types
+## 🤝 Contributing
 
-### PDF (Mixed)
-- Text-based PDFs
-- Scanned PDFs (OCR)
-- Tables
-- Formulas
-- Mixed content
-
-### TXT / MD
-- Plain text files
-- Markdown files
-
-### Other Formats (Future)
-- DOCX
-- PPTX
-- XLSX
-
-## Performance
-
-### Benchmarks (Local Machine)
-
-| Operation | 50 Docs | 500 Docs | 5000 Docs |
-|-----------|---------|----------|-----------|
-| Add Docs  | 5 min   | 30 min   | 3 hours   |
-| Search    | 0.1s    | 0.3s     | 1.2s      |
-
-### Optimization Tips
-
-1. **Increase Chunk Size**: Larger chunks = better context, slower search
-2. **Reduce Top-K**: Fewer results = faster retrieval
-3. **Disable Re-ranking**: Faster but slightly less accurate
-4. **Use Production Backend**: PGVector/Weaviate for large scale
-
-## Scaling to Production
-
-### Local → Cloud Migration
-
-```bash
-# Current: ChromaDB local
-store = LocalVectorStore(
-    backend=VectorBackend.CHROMA,
-    persist_directory="./vector_data"
-)
-
-# Production: PGVector
-store = LocalVectorStore(
-    backend=VectorBackend.PGVECTOR,
-    host="your-db-server",
-    persist_directory=None  # Remote connection
-)
-```
-
-### Docker Deployment
-
-```dockerfile
-FROM python:3.11-slim
-
-# Install dependencies
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-# Copy application
-COPY . /app
-
-# Run
-CMD ["python", "main.py"]
-```
-
-## Troubleshooting
-
-### Issue: "PDF contains no text"
-
-**Solution**: Use OCR strategy
-
-```python
-results = parser.process_batch_pdfs(
-    pdf_paths=["document.pdf"],
-    strategy="ocr"  # Use OCR for scanned PDFs
-)
-```
-
-### Issue: "Memory error with large PDFs"
-
-**Solution**: Reduce chunk size, process in batches
-
-```python
-chunk_size = 300  # Smaller chunks
-```
-
-### Issue: "Embedding model not found"
-
-**Solution**: Install sentence-transformers
-
-```bash
-pip install sentence-transformers
-```
-
-## Future Improvements
-
-- [ ] Support more document formats (DOCX, PPTX, XLSX)
-- [ ] Multi-language support
-- [ ] Advanced query understanding
-- [ ] Citation tracking and verification
-- [ ] Chat interface
-- [ ] Web dashboard
-
-## License
-
-MIT License - Feel free to use and modify!
-
-## Contributing
-
-Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Submit a pull request
+4. Test thoroughly
+5. Submit a pull request
 
-## Credits
+## 📄 License
 
-Built with love using:
-- PyMuPDF for PDF processing
-- Tesseract OCR for scanned documents
-- LangChain for orchestration
-- ChromaDB for local vector storage
-- BGE-M3 for embeddings
+MIT License - See [LICENSE](LICENSE) for details.
+
+## 🙏 Credits
+
+Built with ❤️ for the RAG community.
 
 ---
 
-**Need help?** Check the examples or create an issue! 🚀
+## 📚 Additional Documentation
+
+- [Memory Usage Guide](MEMORY_USAGE.md) - Complete guide to memory features
+- [API Reference](docs/api.md) - Full API documentation
+- [Examples](examples/) - Usage examples and tutorials
+
+## 🆘 Support
+
+For issues:
+- Check the [troubleshooting](MEMORY_USAGE.md#troubleshooting) section
+- Review logs in `./memory_storage/logs/`
+- Export your memory for debugging
+
+For help:
+- Check the [FAQ](FAQ.md)
+- Review the [tutorial](tutorial.md)
+- Contact the maintainers
+
+---
+
+**Version**: 2.0.0 (with Memory!)
+
+**Note**: This version includes automatic memory management. Previous versions are for document-only RAG.
